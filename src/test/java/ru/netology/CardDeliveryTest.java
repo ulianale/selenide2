@@ -1,7 +1,12 @@
 package ru.netology;
 
+import com.codeborne.selenide.Configuration;
+import com.codeborne.selenide.ElementsCollection;
+import com.codeborne.selenide.SelenideElement;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.Keys;
 
 import java.time.Duration;
@@ -27,6 +32,22 @@ public class CardDeliveryTest {
         return date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
     }
 
+    public void twoLetters(String f) { // выбор города из выпадающего списка по двум буквам
+        $("[placeholder='Город']").setValue(f);
+        ElementsCollection forms = $$(".menu-item__control");
+        int m = 0; // счетчик
+        for (SelenideElement form : forms) {
+            if (f.equalsIgnoreCase(form.getText().substring(0,2))) {
+                m++;
+                form.click();
+                break;
+            }
+        }
+        if (m<1){
+            throw new ElementClickInterceptedException("Упс");
+        }
+    }
+
     @BeforeEach
     void setUp() {
         //Configuration.holdBrowserOpen = true;
@@ -35,8 +56,21 @@ public class CardDeliveryTest {
     }
 
     @Test
+    void shouldFindCity() {
+        twoLetters("ка");
+    }
+
+    @Test
+    void shouldExceptionIfNotFindCity() {
+        Assertions.assertThrows(ElementClickInterceptedException.class, () -> {
+            twoLetters("аа");
+        });
+    }
+
+    @Test
     void shouldValidForm() {
-        $("[placeholder='Город']").setValue("Мурманск");
+        twoLetters("ор");
+        //$("[placeholder='Город']").setValue("Мурманск");
         $("[placeholder='Дата встречи']").setValue(data(3));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
