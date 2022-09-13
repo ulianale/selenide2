@@ -13,64 +13,92 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-import static com.codeborne.selenide.Condition.exactText;
+import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.*;
 
 public class CardDeliveryTest {
 
     public void deleteMethod() {   // метод удаляет строку c датой
         String dataField = $("[placeholder='Дата встречи']").getValue();
-        int r = dataField.length(); // кол-во символов в поле
-        $("[placeholder='Дата встречи']").hover().click();
-        for (int i = 0; i < r; i++) {
+        int amount = dataField.length(); // кол-во символов в поле
+        $("[placeholder='Дата встречи']").click();
+        for (int i = 0; i < amount; i++) {
             $("[placeholder='Дата встречи']").sendKeys(Keys.BACK_SPACE);
         }
     }
 
-    public String data(int days) {  // возвращает дату , которая заполнит строку ввода для даты
+    public String data(int days) {  // метод возвращает дату в нужном формате
         LocalDate date = LocalDate.now().plusDays(days);
         return date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
     }
 
-    public void twoLetters(String f) { // выбор города из выпадающего списка по двум буквам
-        $("[placeholder='Город']").setValue(f);
+    public void twoLetters(String letters) { // выбор города из выпадающего списка по двум буквам
+        $("[placeholder='Город']").setValue(letters);
         ElementsCollection forms = $$(".menu-item__control");
-        int m = 0; // счетчик
+        int x = 0; // счетчик
         for (SelenideElement form : forms) {
-            if (f.equalsIgnoreCase(form.getText().substring(0,2))) {
-                m++;
+            if (letters.equalsIgnoreCase(form.getText().substring(0, 2))) {
+                x++;
                 form.click();
                 break;
             }
         }
-        if (m<1){
+        if (x < 1) {
             throw new ElementClickInterceptedException("Упс");
         }
+    }
+
+    public void dayInCalendar(String data) {  // метод выбора дня в календаре(в календарном месяце)
+        ElementsCollection forms = $$(".calendar__day");
+        for (SelenideElement form : forms) {
+            if (data.equals(form.getText())) {
+                form.click();
+                break;
+            }
+        }
+    }
+
+    public void dayInOneWeek() {   // выбор даты на НЕДЕЛЮ вперед через календарь
+        int today = LocalDate.now().getDayOfMonth();
+        int dayInOneWeek = LocalDate.now().plusDays(7).getDayOfMonth();
+        String data = "" + dayInOneWeek; // дата которую нужно поставить в календаре
+
+        $("[placeholder='Дата встречи'").click();
+        if (dayInOneWeek > today) {
+            dayInCalendar(data);
+        } else {
+            $$(".calendar__arrow").last().click();
+            dayInCalendar(data);
+        }
+
     }
 
     @BeforeEach
     void setUp() {
         //Configuration.holdBrowserOpen = true;
         open("http://localhost:9999");
-        deleteMethod();
     }
 
     @Test
-    void shouldFindCity() {
-        twoLetters("ка");
+    void shouldAutoCompleteCityAndUseCalendar() {
+        twoLetters("ор");
+        dayInOneWeek();
+        $("[name='name']").setValue("Анна-Мария Антонова");
+        $("[name='phone']").setValue("+79099001122");
+        $(".checkbox").click();
+        $(".button__text").click();
+        $("[data-test-id='notification']").shouldBe(exactText("Успешно! Встреча успешно забронирована на " + data(7)), Duration.ofSeconds(15));
     }
 
     @Test
-    void shouldExceptionIfNotFindCity() {
-        Assertions.assertThrows(ElementClickInterceptedException.class, () -> {
-            twoLetters("аа");
-        });
+    void shouldExceptionIfNotTwoLetters() {
+        Assertions.assertThrows(ElementClickInterceptedException.class, () -> twoLetters("аа"));
     }
 
     @Test
     void shouldValidForm() {
-        twoLetters("ор");
-        //$("[placeholder='Город']").setValue("Мурманск");
+        $("[placeholder='Город']").setValue("Мурманск");
+        deleteMethod();
         $("[placeholder='Дата встречи']").setValue(data(3));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
@@ -81,6 +109,7 @@ public class CardDeliveryTest {
 
     @Test
     void shouldEmptyCity() {
+        deleteMethod();
         $("[placeholder='Дата встречи']").setValue(data(5));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
@@ -92,6 +121,7 @@ public class CardDeliveryTest {
     @Test
     void shouldNotValidCity() {
         $("[placeholder='Город']").setValue("Пекин");
+        deleteMethod();
         $("[placeholder='Дата встречи']").setValue(data(20));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
@@ -101,8 +131,9 @@ public class CardDeliveryTest {
     }
 
     @Test
-    void shouldEmptyDate() {
+    void shouldEmptyData() {
         $("[placeholder='Город']").setValue("Мурманск");
+        deleteMethod();
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
         $(".checkbox").click();
@@ -111,8 +142,9 @@ public class CardDeliveryTest {
     }
 
     @Test
-    void shouldNotValidDate() {
+    void shouldNotValidData() {
         $("[placeholder='Город']").setValue("Мурманск");
+        deleteMethod();
         $("[placeholder='Дата встречи']").setValue(data(2));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
@@ -124,6 +156,7 @@ public class CardDeliveryTest {
     @Test
     void shouldEmptyName() {
         $("[placeholder='Город']").setValue("Мурманск");
+        deleteMethod();
         $("[placeholder='Дата встречи']").setValue(data(3));
         $("[name='phone']").setValue("+79099001122");
         $(".checkbox").click();
@@ -134,6 +167,7 @@ public class CardDeliveryTest {
     @Test
     void shouldNotValidName() {
         $("[placeholder='Город']").setValue("Мурманск");
+        deleteMethod();
         $("[placeholder='Дата встречи']").setValue(data(4));
         $("[name='name']").setValue("Anna");
         $("[name='phone']").setValue("+79099001122");
@@ -145,6 +179,7 @@ public class CardDeliveryTest {
     @Test
     void shouldEmptyPhone() {
         $("[placeholder='Город']").setValue("Мурманск");
+        deleteMethod();
         $("[placeholder='Дата встречи']").setValue(data(4));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $(".checkbox").click();
@@ -155,6 +190,7 @@ public class CardDeliveryTest {
     @Test
     void shouldNotValidPhone() {
         $("[placeholder='Город']").setValue("Мурманск");
+        deleteMethod();
         $("[placeholder='Дата встречи']").setValue(data(4));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("79099001122");
@@ -166,6 +202,7 @@ public class CardDeliveryTest {
     @Test
     void shouldNoCheckBox() {
         $("[placeholder='Город']").setValue("Мурманск");
+        deleteMethod();
         $("[placeholder='Дата встречи']").setValue(data(4));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
