@@ -1,12 +1,7 @@
 package ru.netology;
 
-import com.codeborne.selenide.Configuration;
-import com.codeborne.selenide.ElementsCollection;
-import com.codeborne.selenide.SelenideElement;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.Keys;
 
 import java.time.Duration;
@@ -23,43 +18,22 @@ public class CardDeliveryTest {
         return date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
     }
 
-    public void twoLetters(String letters) { // выбор города из выпадающего списка по двум буквам, если буквы не совпадают -> исключение
-        $("[placeholder='Город']").setValue(letters);
-        ElementsCollection forms = $$(".menu-item__control");
-        int x = 0; // счетчик
-        for (SelenideElement form : forms) {
-            if (letters.equalsIgnoreCase(form.getText().substring(0, 2))) {
-                x++;
-                form.click();
-                break;
-            }
-        }
-        if (x < 1) {
-            throw new ElementClickInterceptedException("Упс");
-        }
+    public void twoLetters(String selectCity) {   // выбор города из выпадающего списка по двум буквам
+        $("[data-test-id='city'] input").sendKeys(selectCity.substring(0, 2));
+        $$(".popup_visible .menu-item").findBy(text(selectCity)).click();
     }
 
-    public void dayInCalendar(String data) {  // метод выбора дня в календаре(в календарном месяце)
-        ElementsCollection forms = $$(".calendar__day");
-        for (SelenideElement form : forms) {
-            if (data.equals(form.getText())) {
-                form.click();
-                break;
-            }
-        }
-    }
-
-    public void dayInOneWeek() {   // выбор даты на НЕДЕЛЮ вперед через календарь
+    public void dayInOneWeekByCalendar() {   // выбор даты на НЕДЕЛЮ вперед через календарь
         int today = LocalDate.now().getDayOfMonth();
         int dayInOneWeek = LocalDate.now().plusDays(7).getDayOfMonth(); // дата которую нужно поставить в календаре
         String data = "" + dayInOneWeek; // преобразую число в строку
 
         $("[placeholder='Дата встречи'").click();
         if (dayInOneWeek > today) {
-            dayInCalendar(data);
+            $$(".calendar__day").findBy(text(data)).click();
         } else {
             $$(".calendar__arrow").last().click();
-            dayInCalendar(data);
+            $$(".calendar__day").findBy(text(data)).click();
         }
 
     }
@@ -72,18 +46,13 @@ public class CardDeliveryTest {
 
     @Test
     void shouldAutoCompleteCityAndUseCalendar() {
-        twoLetters("ор");
-        dayInOneWeek();
+        twoLetters("Москва");
+        dayInOneWeekByCalendar();
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
         $(".checkbox").click();
         $(".button__text").click();
         $("[data-test-id='notification']").shouldBe(exactText("Успешно! Встреча успешно забронирована на " + data(7)), Duration.ofSeconds(15));
-    }
-
-    @Test
-    void shouldExceptionIfNotTwoLetters() {
-        Assertions.assertThrows(ElementClickInterceptedException.class, () -> twoLetters("аа"));
     }
 
     @Test
