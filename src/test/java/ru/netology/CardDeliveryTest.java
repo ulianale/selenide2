@@ -18,21 +18,12 @@ import static com.codeborne.selenide.Selenide.*;
 
 public class CardDeliveryTest {
 
-    public void deleteMethod() {   // метод удаляет строку c датой
-        String dataField = $("[placeholder='Дата встречи']").getValue();
-        int amount = dataField.length(); // кол-во символов в поле
-        $("[placeholder='Дата встречи']").click();
-        for (int i = 0; i < amount; i++) {
-            $("[placeholder='Дата встречи']").sendKeys(Keys.BACK_SPACE);
-        }
-    }
-
-    public String data(int days) {  // метод возвращает дату в нужном формате
+    public String data(int days) {  // метод прибавляет заданное кол-во дней к текущей дате, и возвращает её в нужном формате
         LocalDate date = LocalDate.now().plusDays(days);
         return date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
     }
 
-    public void twoLetters(String letters) { // выбор города из выпадающего списка по двум буквам
+    public void twoLetters(String letters) { // выбор города из выпадающего списка по двум буквам, если буквы не совпадают -> исключение
         $("[placeholder='Город']").setValue(letters);
         ElementsCollection forms = $$(".menu-item__control");
         int x = 0; // счетчик
@@ -60,8 +51,8 @@ public class CardDeliveryTest {
 
     public void dayInOneWeek() {   // выбор даты на НЕДЕЛЮ вперед через календарь
         int today = LocalDate.now().getDayOfMonth();
-        int dayInOneWeek = LocalDate.now().plusDays(7).getDayOfMonth();
-        String data = "" + dayInOneWeek; // дата которую нужно поставить в календаре
+        int dayInOneWeek = LocalDate.now().plusDays(7).getDayOfMonth(); // дата которую нужно поставить в календаре
+        String data = "" + dayInOneWeek; // преобразую число в строку
 
         $("[placeholder='Дата встречи'").click();
         if (dayInOneWeek > today) {
@@ -98,7 +89,7 @@ public class CardDeliveryTest {
     @Test
     void shouldValidForm() {
         $("[placeholder='Город']").setValue("Мурманск");
-        deleteMethod();
+        $("[placeholder='Дата встречи']").doubleClick().sendKeys(Keys.DELETE);
         $("[placeholder='Дата встречи']").setValue(data(3));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
@@ -109,7 +100,7 @@ public class CardDeliveryTest {
 
     @Test
     void shouldEmptyCity() {
-        deleteMethod();
+        $("[placeholder='Дата встречи']").doubleClick().sendKeys(Keys.DELETE);
         $("[placeholder='Дата встречи']").setValue(data(5));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
@@ -121,7 +112,7 @@ public class CardDeliveryTest {
     @Test
     void shouldNotValidCity() {
         $("[placeholder='Город']").setValue("Пекин");
-        deleteMethod();
+        $("[placeholder='Дата встречи']").doubleClick().sendKeys(Keys.DELETE);
         $("[placeholder='Дата встречи']").setValue(data(20));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
@@ -133,7 +124,7 @@ public class CardDeliveryTest {
     @Test
     void shouldEmptyData() {
         $("[placeholder='Город']").setValue("Мурманск");
-        deleteMethod();
+        $("[placeholder='Дата встречи']").doubleClick().sendKeys(Keys.DELETE);
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
         $(".checkbox").click();
@@ -144,7 +135,7 @@ public class CardDeliveryTest {
     @Test
     void shouldNotValidData() {
         $("[placeholder='Город']").setValue("Мурманск");
-        deleteMethod();
+        $("[placeholder='Дата встречи']").doubleClick().sendKeys(Keys.DELETE);
         $("[placeholder='Дата встречи']").setValue(data(2));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
@@ -156,7 +147,7 @@ public class CardDeliveryTest {
     @Test
     void shouldEmptyName() {
         $("[placeholder='Город']").setValue("Мурманск");
-        deleteMethod();
+        $("[placeholder='Дата встречи']").doubleClick().sendKeys(Keys.DELETE);
         $("[placeholder='Дата встречи']").setValue(data(3));
         $("[name='phone']").setValue("+79099001122");
         $(".checkbox").click();
@@ -167,7 +158,7 @@ public class CardDeliveryTest {
     @Test
     void shouldNotValidName() {
         $("[placeholder='Город']").setValue("Мурманск");
-        deleteMethod();
+        $("[placeholder='Дата встречи']").doubleClick().sendKeys(Keys.DELETE);
         $("[placeholder='Дата встречи']").setValue(data(4));
         $("[name='name']").setValue("Anna");
         $("[name='phone']").setValue("+79099001122");
@@ -179,7 +170,7 @@ public class CardDeliveryTest {
     @Test
     void shouldEmptyPhone() {
         $("[placeholder='Город']").setValue("Мурманск");
-        deleteMethod();
+        $("[placeholder='Дата встречи']").doubleClick().sendKeys(Keys.DELETE);
         $("[placeholder='Дата встречи']").setValue(data(4));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $(".checkbox").click();
@@ -190,7 +181,7 @@ public class CardDeliveryTest {
     @Test
     void shouldNotValidPhone() {
         $("[placeholder='Город']").setValue("Мурманск");
-        deleteMethod();
+        $("[placeholder='Дата встречи']").doubleClick().sendKeys(Keys.DELETE);
         $("[placeholder='Дата встречи']").setValue(data(4));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("79099001122");
@@ -202,7 +193,7 @@ public class CardDeliveryTest {
     @Test
     void shouldNoCheckBox() {
         $("[placeholder='Город']").setValue("Мурманск");
-        deleteMethod();
+        $("[placeholder='Дата встречи']").doubleClick().sendKeys(Keys.DELETE);
         $("[placeholder='Дата встречи']").setValue(data(4));
         $("[name='name']").setValue("Анна-Мария Антонова");
         $("[name='phone']").setValue("+79099001122");
